@@ -1,38 +1,17 @@
-# Flux Audio Track Component
+# Audio Track Component
 
-Audio player components for Flux UI with inline playback and a detachable floating player.
+Audio player components with inline playback and a detachable floating player.
 
-## Architecture
+## Components
 
-This component follows Flux Pro's architecture:
+| Component | Description |
+|-----------|-------------|
+| `flux:audio-track` | Inline audio track with playback controls |
+| `flux:audio-track.player` | Floating mini-player (include once in layout) |
+| `flux:audio-track.waveform` | Standalone waveform visualization |
+| `flux:audio-track.action` | Action button for custom actions slot |
 
-- **Custom Elements**: Uses `<ui-audio-track>` and `<ui-audio-player>` Web Components
-- **Blade Stubs**: Located in `stubs/resources/views/flux/audio-track/`
-- **JavaScript**: Standalone `dist/audio-player.js` (similar to `editor.js`)
-
-## Installation
-
-### 1. Copy Files
-
-Copy the following to your Flux Pro package:
-
-```
-dist/audio-player.js              -> vendor/livewire/flux-pro/dist/
-stubs/resources/views/flux/audio-track/  -> vendor/livewire/flux-pro/stubs/resources/views/flux/
-```
-
-### 2. Load the JavaScript
-
-Add the script after `@fluxScripts` in your layout:
-
-```blade
-@fluxScripts
-<script src="{{ asset('vendor/livewire/flux-pro/dist/audio-player.js') }}"></script>
-```
-
-Or publish and include via Vite.
-
-### 3. Add Player to Layout
+## Setup
 
 Include the floating player component once in your layout:
 
@@ -43,15 +22,6 @@ Include the floating player component once in your layout:
     <flux:audio-track.player />
 </body>
 ```
-
-## Components
-
-| Component | Description |
-|-----------|-------------|
-| `flux:audio-track` | Inline audio track with playback controls |
-| `flux:audio-track.player` | Floating mini-player (include once in layout) |
-| `flux:audio-track.waveform` | Standalone waveform visualization |
-| `flux:audio-track.action` | Action button for custom actions slot |
 
 ## Usage
 
@@ -86,8 +56,8 @@ Include the floating player component once in your layout:
     :detachable="false"
 >
     <x-slot:actions>
-        <flux:audio-track.action icon="heart" @click="favorite()" />
-        <flux:audio-track.action icon="share" @click="share()" />
+        <flux:audio-track.action icon="heart" />
+        <flux:audio-track.action icon="share" />
     </x-slot:actions>
 </flux:audio-track>
 ```
@@ -98,7 +68,7 @@ Include the floating player component once in your layout:
 <flux:audio-track.player draggable />
 ```
 
-## Props Reference
+## Props
 
 ### `flux:audio-track`
 
@@ -111,8 +81,8 @@ Include the floating player component once in your layout:
 | `plays` | string | null | Play count display |
 | `src` | string | null | Audio file URL |
 | `detachable` | bool | true | Show detach button |
-| `waveform` | slot | null | Custom waveform content |
-| `actions` | slot | null | Custom action buttons |
+| `waveform` | slot | — | Custom waveform content |
+| `actions` | slot | — | Custom action buttons |
 
 ### `flux:audio-track.player`
 
@@ -128,7 +98,7 @@ Include the floating player component once in your layout:
 
 ## JavaScript API
 
-The floating player exposes a global `window.fluxAudioPlayer` object:
+The floating player exposes `window.fluxAudioPlayer`:
 
 ```javascript
 // Load a track
@@ -139,42 +109,9 @@ fluxAudioPlayer.toggle();
 fluxAudioPlayer.seek(0.5); // 50%
 fluxAudioPlayer.close();
 
-// Get state
+// State
 fluxAudioPlayer.state.playing;
 fluxAudioPlayer.state.progress;
 fluxAudioPlayer.state.currentTime;
 fluxAudioPlayer.state.duration;
 ```
-
-## File Structure
-
-```
-flux-audio-track/
-├── README.md
-├── dist/
-│   └── audio-player.js           # Web Components
-└── stubs/
-    └── resources/
-        └── views/
-            └── flux/
-                └── audio-track/
-                    ├── index.blade.php    # Main track component
-                    ├── player.blade.php   # Floating player
-                    ├── waveform.blade.php # Waveform visualization
-                    └── action.blade.php   # Action button
-```
-
-## Integration Notes
-
-This component is designed to integrate seamlessly with Flux Pro:
-
-1. **Web Components**: Uses `<ui-audio-track>` and `<ui-audio-player>` following Flux's `<ui-*>` pattern
-2. **Blade Conventions**: Uses `@blaze`, `Flux::classes()`, `<?php if ?>` syntax
-3. **Styling**: Uses Tailwind CSS with dark mode support
-4. **Slots**: Supports `waveform` and `actions` slots
-
-To bundle into Flux Pro's `flux.js`, the Web Component classes can be added to the main bundle and the custom element registrations included in the initialization.
-
----
-
-*Proposed for Flux UI*
