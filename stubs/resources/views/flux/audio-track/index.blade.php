@@ -7,6 +7,7 @@
     'duration' => null,
     'plays' => null,
     'src' => null,
+    'detachable' => true,
     'waveform' => null,
     'actions' => null,
 ])
@@ -21,7 +22,8 @@ $classes = Flux::classes()
     ;
 
 $imageClasses = Flux::classes()
-    ->add('relative shrink-0 size-12 rounded-md overflow-hidden')
+    ->add('relative shrink-0 size-12 rounded-md overflow-hidden cursor-pointer')
+    ->add('group')
     ->add([
         'after:absolute after:inset-0 after:inset-ring-[1px] after:inset-ring-black/7 dark:after:inset-ring-white/10',
         'after:rounded-md',
@@ -34,8 +36,7 @@ $contentClasses = Flux::classes()
     ;
 
 $waveformClasses = Flux::classes()
-    ->add('flex-1 flex items-center justify-center')
-    ->add('h-8 min-w-0')
+    ->add('flex-1 h-8 min-w-0 cursor-pointer')
     ;
 
 $statsClasses = Flux::classes()
@@ -43,19 +44,41 @@ $statsClasses = Flux::classes()
     ->add('shrink-0')
     ->add('text-sm text-zinc-500 dark:text-zinc-400')
     ;
+
+$bars = 60;
+$waveformData = collect(range(1, $bars))->map(function ($i) use ($bars) {
+    $center = $bars / 2;
+    $distance = abs($i - $center) / $center;
+    $baseHeight = 0.3 + (0.7 * (1 - $distance * 0.5));
+    $random = (mt_rand(30, 100) / 100);
+    return min(1, max(0.15, $baseHeight * $random));
+});
 @endphp
 
-<div {{ $attributes->class($classes) }} data-flux-audio-track>
-    {{-- Album Art --}}
-    <?php if ($image): ?>
-        <div class="{{ $imageClasses }}">
+<ui-audio-track
+    {{ $attributes->class($classes) }}
+    data-src="{{ $src }}"
+    data-title="{{ $title }}"
+    data-artist="{{ $artist }}"
+    data-image="{{ $image }}"
+    data-flux-audio-track
+>
+    {{-- Album Art with Play Button --}}
+    <div class="{{ $imageClasses }}" data-action="toggle">
+        <?php if ($image): ?>
             <img class="h-full w-full object-cover" src="{{ $image }}" alt="{{ $title }}">
+        <?php else: ?>
+            <div class="h-full w-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <flux:icon name="musical-note" class="size-6 text-zinc-400" />
+            </div>
+        <?php endif; ?>
+
+        {{-- Play/Pause Overlay --}}
+        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <flux:icon name="play" variant="solid" class="size-6 text-white [[ui-audio-track].playing_&]:hidden" />
+            <flux:icon name="pause" variant="solid" class="size-6 text-white hidden [[ui-audio-track].playing_&]:block" />
         </div>
-    <?php else: ?>
-        <div class="{{ $imageClasses }} bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            <flux:icon name="musical-note" class="size-6 text-zinc-400" />
-        </div>
-    <?php endif; ?>
+    </div>
 
     {{-- Title & Artist --}}
     <div class="{{ $contentClasses }}" data-slot="content">
@@ -68,20 +91,26 @@ $statsClasses = Flux::classes()
         <?php endif; ?>
     </div>
 
-    {{-- Waveform --}}
-    <div class="{{ $waveformClasses }}" data-slot="waveform">
+    {{-- Interactive Waveform --}}
+    <div class="{{ $waveformClasses }}" data-action="seek" data-slot="waveform">
         <?php if ($waveform): ?>
             {{ $waveform }}
         <?php else: ?>
-            <flux:audio-track.waveform />
+            <div class="flex items-center justify-center gap-[2px] h-full w-full">
+                @foreach ($waveformData as $index => $height)
+                    <div
+                        class="w-[2px] rounded-full transition-colors bg-zinc-300 dark:bg-zinc-600 [&.active]:bg-zinc-800 dark:[&.active]:bg-white"
+                        data-waveform-bar
+                        style="height: {{ $height * 100 }}%"
+                    ></div>
+                @endforeach
+            </div>
         <?php endif; ?>
     </div>
 
     {{-- Stats --}}
     <div class="{{ $statsClasses }}" data-slot="stats">
-        <?php if ($duration): ?>
-            <span class="tabular-nums">{{ $duration }}</span>
-        <?php endif; ?>
+        <span class="tabular-nums" data-time>{{ $duration ?? '0:00' }}</span>
 
         <?php if ($plays !== null): ?>
             <span class="tabular-nums">{{ $plays }}</span>
@@ -96,5 +125,16 @@ $statsClasses = Flux::classes()
         ]) }} data-slot="actions">
             {{ $actions }}
         </div>
+    <?php elseif ($detachable): ?>
+        <div class="flex items-center gap-1 shrink-0" data-slot="actions">
+            <flux:button variant="ghost" size="sm" square data-action="detach" aria-label="{{ __('Detach player') }}">
+                <flux:icon name="arrow-top-right-on-square" class="size-4" />
+            </flux:button>
+        </div>
     <?php endif; ?>
-</div>
+
+    {{-- Hidden Audio Element --}}
+    <?php if ($src): ?>
+        <audio src="{{ $src }}" preload="metadata"></audio>
+    <?php endif; ?>
+</ui-audio-track>

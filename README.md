@@ -1,111 +1,101 @@
-# Flux Audio Track Component Proposal
+# Flux Audio Track Component
 
-A set of audio player components for Flux UI with support for inline playback and a detachable floating player.
+Audio player components for Flux UI with inline playback and a detachable floating player.
 
-## Components
+## Architecture
 
-| Component | Description |
-|-----------|-------------|
-| `flux:audio-track` | Static display of track info (title, artist, waveform, duration) |
-| `flux:audio-track.playable` | Interactive player with play/pause and seeking |
-| `flux:audio-track.floating` | Floating mini-player that persists across navigation |
-| `flux:audio-track.provider` | Layout wrapper that initializes the floating player |
-| `flux:audio-track.waveform` | Standalone waveform visualization |
-| `flux:audio-track.action` | Action button for use in actions slot |
+This component follows Flux Pro's architecture:
+
+- **Custom Elements**: Uses `<ui-audio-track>` and `<ui-audio-player>` Web Components
+- **Blade Stubs**: Located in `stubs/resources/views/flux/audio-track/`
+- **JavaScript**: Standalone `dist/audio-player.js` (similar to `editor.js`)
 
 ## Installation
 
-### 1. Copy Blade Components
+### 1. Copy Files
 
-Copy the contents of `stubs/resources/views/flux/audio-track/` to your Flux views directory.
+Copy the following to your Flux Pro package:
 
-### 2. Register the Alpine.js Plugin
-
-The audio player functionality requires an Alpine.js plugin. Add it to your JavaScript bundle:
-
-```javascript
-// resources/js/app.js
-import Alpine from 'alpinejs'
-import audioTrack from './plugins/audio-track'
-
-Alpine.plugin(audioTrack)
-
-Alpine.start()
+```
+dist/audio-player.js              -> vendor/livewire/flux-pro/dist/
+stubs/resources/views/flux/audio-track/  -> vendor/livewire/flux-pro/stubs/resources/views/flux/
 ```
 
-Copy `js/audio-track.js` to `resources/js/plugins/audio-track.js` (or your preferred location).
+### 2. Load the JavaScript
 
-### 3. Add the Provider to Your Layout
+Add the script after `@fluxScripts` in your layout:
 
-Include the provider component once in your layout (typically in the body):
+```blade
+@fluxScripts
+<script src="{{ asset('vendor/livewire/flux-pro/dist/audio-player.js') }}"></script>
+```
+
+Or publish and include via Vite.
+
+### 3. Add Player to Layout
+
+Include the floating player component once in your layout:
 
 ```blade
 <body>
     {{ $slot }}
 
-    <flux:audio-track.provider />
+    <flux:audio-track.player />
 </body>
 ```
 
+## Components
+
+| Component | Description |
+|-----------|-------------|
+| `flux:audio-track` | Inline audio track with playback controls |
+| `flux:audio-track.player` | Floating mini-player (include once in layout) |
+| `flux:audio-track.waveform` | Standalone waveform visualization |
+| `flux:audio-track.action` | Action button for custom actions slot |
+
 ## Usage
 
-### Basic Static Display
+### Basic Track
 
 ```blade
 <flux:audio-track
-    image="/path/to/album-art.jpg"
+    image="/albums/cover.jpg"
     title="Song Title"
     artist="Artist Name"
-    duration="3:45"
-    plays="1.2K"
+    src="/audio/track.mp3"
 />
 ```
 
-### Playable Track
+### Without Detach Button
 
 ```blade
-<flux:audio-track.playable
-    image="/path/to/album-art.jpg"
+<flux:audio-track
     title="Song Title"
     artist="Artist Name"
-    src="/path/to/audio.mp3"
+    src="/audio/track.mp3"
+    :detachable="false"
 />
 ```
 
 ### With Custom Actions
 
 ```blade
-<flux:audio-track.playable
+<flux:audio-track
     title="Song Title"
-    artist="Artist Name"
-    src="/path/to/audio.mp3"
+    src="/audio/track.mp3"
     :detachable="false"
 >
     <x-slot:actions>
-        <flux:audio-track.action icon="link" @click="copyLink()" />
         <flux:audio-track.action icon="heart" @click="favorite()" />
+        <flux:audio-track.action icon="share" @click="share()" />
     </x-slot:actions>
-</flux:audio-track.playable>
-```
-
-### Disable Detach Button
-
-```blade
-<flux:audio-track.playable
-    title="Song Title"
-    src="/path/to/audio.mp3"
-    :detachable="false"
-/>
+</flux:audio-track>
 ```
 
 ### Draggable Floating Player
 
-The floating player can be made draggable, allowing users to click and drag the track info area to reposition it anywhere on screen. The position resets when the player is closed.
-
-To enable dragging:
-
 ```blade
-<flux:audio-track.provider :draggable="true" />
+<flux:audio-track.player draggable />
 ```
 
 ## Props Reference
@@ -114,168 +104,77 @@ To enable dragging:
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `image` | string | null | URL to album art |
+| `image` | string | null | Album art URL |
 | `title` | string | null | Track title |
 | `artist` | string | null | Artist name |
 | `duration` | string | null | Duration display (e.g., "3:45") |
 | `plays` | string | null | Play count display |
+| `src` | string | null | Audio file URL |
+| `detachable` | bool | true | Show detach button |
 | `waveform` | slot | null | Custom waveform content |
 | `actions` | slot | null | Custom action buttons |
 
-### `flux:audio-track.playable`
+### `flux:audio-track.player`
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `image` | string | null | URL to album art |
-| `title` | string | null | Track title |
-| `artist` | string | null | Artist name |
-| `duration` | string | null | Initial duration display |
-| `plays` | string | null | Play count display |
-| `src` | string | null | Audio file URL |
-| `detachable` | bool | true | Show detach button |
-| `actions` | slot | null | Custom action buttons (replaces detach button) |
-
-### `flux:audio-track.provider`
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `draggable` | bool | false | Allow user to drag the floating player |
-
-### `flux:audio-track.floating`
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `draggable` | bool | false | Allow user to drag the player around the screen |
+| `draggable` | bool | false | Allow dragging the player |
 
 ### `flux:audio-track.waveform`
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `bars` | int | 60 | Number of waveform bars |
-| `progress` | int | 0 | Progress percentage (0-100) |
-| `interactive` | bool | false | Enable click-to-seek |
 
-## Architecture Notes
+## JavaScript API
 
-### JavaScript Store
-
-The audio player uses an Alpine.js store (`$store.audioPlayer`) for global state management. This allows:
-
-- Multiple playable tracks on a page
-- Seamless handoff to floating player
-- Persistent playback across page navigations (with Livewire/SPA)
-
-### State Properties
+The floating player exposes a global `window.fluxAudioPlayer` object:
 
 ```javascript
-$store.audioPlayer = {
-    active: false,      // Floating player visible
-    playing: false,     // Currently playing
-    progress: 0,        // Playback progress (0-100)
-    currentTime: 0,     // Current position in seconds
-    duration: 0,        // Total duration in seconds
-    src: null,          // Audio source URL
-    title: null,        // Track title
-    artist: null,       // Artist name
-    image: null,        // Album art URL
-}
+// Load a track
+fluxAudioPlayer.load(src, title, artist, image, startTime, autoplay);
+
+// Control playback
+fluxAudioPlayer.toggle();
+fluxAudioPlayer.seek(0.5); // 50%
+fluxAudioPlayer.close();
+
+// Get state
+fluxAudioPlayer.state.playing;
+fluxAudioPlayer.state.progress;
+fluxAudioPlayer.state.currentTime;
+fluxAudioPlayer.state.duration;
 ```
-
-### Store Methods
-
-```javascript
-// Load a track into the floating player
-$store.audioPlayer.load(src, title, artist, image, startTime, autoplay)
-
-// Toggle play/pause
-$store.audioPlayer.toggle()
-
-// Seek to position (pass click event)
-$store.audioPlayer.seek(event)
-
-// Close the floating player
-$store.audioPlayer.close()
-
-// Format seconds to MM:SS
-$store.audioPlayer.formatTime(seconds)
-```
-
-## Note for Caleb
-
-**This is a working prototype.** We've implemented this using an Alpine.js store and plugin pattern, which differs from Flux Pro's architecture.
-
-### Current Implementation (Alpine.js)
-- Requires users to import and register `js/audio-track.js` as an Alpine plugin
-- Uses `$store.audioPlayer` for global state management
-- Works, but requires an extra setup step for users
-
-### Flux Pro's Pattern (Web Components)
-- Flux Pro uses custom `<ui-*>` Web Components (e.g., `<ui-modal>`, `<ui-dropdown>`)
-- These are bundled into `@fluxScripts` automatically
-- Zero configuration required from users
-
-### Our Offer
-If you'd like to include this component in Flux, we're happy to convert the Alpine.js store to a `<ui-audio-player>` Web Component that integrates seamlessly with `@fluxScripts`. The Blade templates follow Flux conventions and should require minimal changes.
-
-Just let us know your preferred approach!
-
----
-
-## Design Decisions
-
-### Why We Used Alpine.js (For Now)
-
-We chose Alpine.js stores for this prototype because:
-
-1. **Faster Prototyping**: Allowed us to validate the UX quickly
-2. **Laravel Ecosystem Familiarity**: Alpine.js is well-known in the Livewire community
-3. **Easier to Demonstrate**: No build step required to test the components
-
-This can be refactored to Web Components for Flux core integration.
-
-### Waveform Generation
-
-The waveform uses randomly generated bar heights with a bell-curve distribution (higher in the middle) for a natural look. For real audio analysis, the component could accept actual waveform data via a prop.
-
-### Draggable Floating Player
-
-The floating player supports drag-and-drop repositioning:
-
-- **Drag handle**: The track info area (title/artist) serves as the drag handle
-- **Boundary constraints**: Player stays within viewport bounds
-- **Position reset**: Position resets to center-bottom when player is closed
-- **Cursor feedback**: Shows grab/grabbing cursors when draggable
 
 ## File Structure
 
 ```
-flux-audio-track-proposal/
+flux-audio-track/
 ├── README.md
-├── js/
-│   └── audio-track.js          # Alpine.js plugin
+├── dist/
+│   └── audio-player.js           # Web Components
 └── stubs/
     └── resources/
         └── views/
             └── flux/
                 └── audio-track/
-                    ├── index.blade.php       # Static display
-                    ├── playable.blade.php    # Interactive player
-                    ├── floating.blade.php    # Floating mini-player
-                    ├── provider.blade.php    # Layout provider
-                    ├── waveform.blade.php    # Waveform visualization
-                    └── action.blade.php      # Action button
+                    ├── index.blade.php    # Main track component
+                    ├── player.blade.php   # Floating player
+                    ├── waveform.blade.php # Waveform visualization
+                    └── action.blade.php   # Action button
 ```
 
-## Future Enhancements
+## Integration Notes
 
-- Real waveform data support (from audio analysis)
-- Playlist/queue support
-- Volume controls
-- Keyboard shortcuts
-- Media session API integration (OS media controls)
-- Custom progress bar styles
-- Touch/mobile drag support
+This component is designed to integrate seamlessly with Flux Pro:
+
+1. **Web Components**: Uses `<ui-audio-track>` and `<ui-audio-player>` following Flux's `<ui-*>` pattern
+2. **Blade Conventions**: Uses `@blaze`, `Flux::classes()`, `<?php if ?>` syntax
+3. **Styling**: Uses Tailwind CSS with dark mode support
+4. **Slots**: Supports `waveform` and `actions` slots
+
+To bundle into Flux Pro's `flux.js`, the Web Component classes can be added to the main bundle and the custom element registrations included in the initialization.
 
 ---
 
-*Proposed for inclusion in Flux UI by the iC team.*
+*Proposed for Flux UI*

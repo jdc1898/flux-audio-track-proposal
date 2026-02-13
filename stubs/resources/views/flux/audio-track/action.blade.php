@@ -7,8 +7,8 @@
 
     Usage:
         <x-slot:actions>
-            <flux:audio-track.action icon="link" />
-            <flux:audio-track.action icon="arrow-path" />
+            <flux:audio-track.action icon="heart" />
+            <flux:audio-track.action icon="share" />
         </x-slot:actions>
 --}}
 

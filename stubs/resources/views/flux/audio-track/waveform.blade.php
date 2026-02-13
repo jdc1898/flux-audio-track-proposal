@@ -2,8 +2,6 @@
 
 @props([
     'bars' => 60,
-    'progress' => 0,
-    'interactive' => false,
 ])
 
 @php
@@ -23,11 +21,8 @@ $waveformData = collect(range(1, $bars))->map(function ($i) use ($bars) {
 <div {{ $attributes->class($classes) }} data-flux-audio-track-waveform>
     @foreach ($waveformData as $index => $height)
         <div
-            class="w-[2px] rounded-full transition-colors"
-            @class([
-                'bg-zinc-800 dark:bg-white' => ($index / $bars) * 100 < $progress,
-                'bg-zinc-300 dark:bg-zinc-600' => ($index / $bars) * 100 >= $progress,
-            ])
+            class="w-[2px] rounded-full transition-colors bg-zinc-300 dark:bg-zinc-600 [&.active]:bg-zinc-800 dark:[&.active]:bg-white"
+            data-waveform-bar
             style="height: {{ $height * 100 }}%"
         ></div>
     @endforeach
